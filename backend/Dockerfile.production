@@ -25,7 +25,10 @@ COPY backend/tsconfig.build.json ./
 COPY backend/nest-cli.json ./
 
 # Generate Prisma Client
-RUN npx prisma generate
+# Prisma generate tidak perlu DATABASE_URL untuk generate client
+# Set dummy DATABASE_URL untuk menghindari error (tidak akan digunakan)
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+RUN npx prisma generate --schema=./prisma/schema.prisma
 
 # Build application
 RUN npm run build
