@@ -1,0 +1,12 @@
+# Railway configuration untuk backend service
+# File ini akan digunakan jika deploy dari backend/ directory
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile.production"
+
+[deploy]
+startCommand = "node dist/main.js"
+healthcheckPath = "/api/groups"
+healthcheckTimeout = 100
+

@@ -2,6 +2,7 @@
 node_modules
 npm-debug.log
 yarn-error.log
+package-lock.json
 
 # Environment
 .env
@@ -16,18 +17,39 @@ yarn-error.log
 # Build
 dist
 build
+coverage
 
 # Testing
+*.spec.ts
+test
 coverage
 
 # OS
 .DS_Store
+Thumbs.db
 
-# WhatsApp session
+# WhatsApp session (will be created at runtime)
 .wwebjs_auth
 .wwebjs_cache
 
 # Git
 .git
 .gitignore
+.gitattributes
+
+# Documentation
 README.md
+*.md
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# CI/CD
+.github
+.gitlab-ci.yml
+
+# Logs
+logs
+*.log

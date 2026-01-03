@@ -1,0 +1,68 @@
+# Multi-stage build untuk production deployment di Railway
+# Railway akan build dari root directory, jadi path relatif ke backend/
+
+# Stage 1: Dependencies
+FROM node:20-alpine AS deps
+WORKDIR /app
+
+# Copy package files
+COPY backend/package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+
+# Stage 2: Builder
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+# Install build dependencies
+COPY backend/package*.json ./
+RUN npm ci && npm cache clean --force
+
+# Copy source code dan config files
+COPY backend/src ./src
+COPY backend/prisma ./prisma
+COPY backend/tsconfig.json ./
+COPY backend/tsconfig.build.json ./
+COPY backend/nest-cli.json ./
+
+# Generate Prisma Client
+RUN npx prisma generate
+
+# Build application
+RUN npm run build
+
+# Stage 3: Production
+FROM node:20-alpine AS production
+WORKDIR /app
+
+# Install dumb-init for proper signal handling
+RUN apk add --no-cache dumb-init wget
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+
+# Copy package files
+COPY backend/package*.json ./
+
+# Install only production dependencies
+RUN npm ci --only=production && npm cache clean --force
+
+# Copy built application from builder
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/prisma ./prisma
+
+# Create directories for WhatsApp session
+RUN mkdir -p .wwebjs_auth .wwebjs_cache
+
+# Expose port (Railway akan set PORT environment variable)
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:${PORT:-3000}/api/groups || exit 1
+
+# Run application with dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "dist/main.js"]
+
