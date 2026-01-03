@@ -2,7 +2,7 @@
 # Railway akan build dari root directory, jadi path relatif ke backend/
 
 # Stage 1: Dependencies
-FROM node:20-alpine AS deps
+FROM node:20-alpine3.18 AS deps
 WORKDIR /app
 
 # Copy package files
@@ -10,10 +10,11 @@ COPY backend/package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 
 # Stage 2: Builder
-FROM node:20-alpine AS builder
+# Use Alpine 3.18 which has openssl1.1-compat available
+FROM node:20-alpine3.18 AS builder
 WORKDIR /app
 
-# Install build dependencies including OpenSSL 1.1 compat for Prisma
+# Install OpenSSL 1.1 compatibility for Prisma
 RUN apk add --no-cache openssl1.1-compat
 
 # Install build dependencies
@@ -37,11 +38,12 @@ RUN npx prisma generate --schema=./prisma/schema.prisma
 RUN npm run build
 
 # Stage 3: Production
-FROM node:20-alpine AS production
+# Use Alpine 3.18 which has openssl1.1-compat available
+FROM node:20-alpine3.18 AS production
 WORKDIR /app
 
 # Install dependencies for Prisma (libssl.so.1.1 compatibility)
-# Alpine Linux modern uses OpenSSL 3.x, but Prisma needs libssl.so.1.1
+# Alpine 3.18 still has openssl1.1-compat package
 RUN apk add --no-cache \
     dumb-init \
     wget \
