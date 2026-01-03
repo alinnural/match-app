@@ -1,0 +1,33 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.sw?
+
+# Build
+dist
+build
+
+# Testing
+coverage
+
+# OS
+.DS_Store
+
+# WhatsApp session
+.wwebjs_auth
+.wwebjs_cache
+
+# Git
+.git
+.gitignore
+README.md

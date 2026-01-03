@@ -1,0 +1,167 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// PHASE 1 TABLES (Core functionality)
+// ============================================
+
+// Users Table (Phase 2 ready, minimal for Phase 1)
+// Di Phase 1, user otomatis terbuat dari WhatsApp
+model User {
+  id           String   @id @default(uuid())
+  phone        String?  @unique
+  email        String?  @unique
+  passwordHash String?  @map("password_hash")
+  name         String
+  avatarUrl    String?  @map("avatar_url")
+  isVerified   Boolean  @default(false) @map("is_verified")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  createdGroups     Group[]             @relation("UserCreatedGroups")
+  members           Member[]
+  matchParticipants MatchParticipant[]
+
+  @@map("users")
+}
+
+// Groups Table
+model Group {
+  id          String   @id @default(uuid())
+  waGroupId   String?  @unique @map("wa_group_id")
+  name        String
+  description String?
+  kasBalance  Decimal  @default(0) @map("kas_balance") @db.Decimal(15, 2)
+  isPublic    Boolean  @default(false) @map("is_public")
+  createdById String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  createdBy       User?             @relation("UserCreatedGroups", fields: [createdById], references: [id])
+  members         Member[]
+  matches         Match[]
+  kasTransactions KasTransaction[]
+
+  @@map("groups")
+}
+
+// Members Table (junction: users <-> groups)
+model Member {
+  id         String   @id @default(uuid())
+  groupId    String   @map("group_id")
+  userId     String?  @map("user_id")
+  waUserId   String?  @map("wa_user_id")
+  name       String
+  phone      String?
+  role       String   @default("member") // admin, member
+  invitedById String?  @map("invited_by")
+  joinedAt   DateTime @default(now()) @map("joined_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  group               Group              @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user                User?              @relation(fields: [userId], references: [id])
+  invitedBy           Member?            @relation("MemberInvites", fields: [invitedById], references: [id])
+  invitedMembers      Member[]           @relation("MemberInvites")
+  createdMatches      Match[]
+  matchParticipants   MatchParticipant[]
+  createdTransactions KasTransaction[]
+
+  @@unique([groupId, waUserId])
+  @@unique([groupId, userId])
+  @@map("members")
+}
+
+// Matches Table
+model Match {
+  id              String    @id @default(uuid())
+  groupId         String    @map("group_id")
+  name            String
+  venue           String
+  matchDatetime   DateTime  @map("match_datetime")
+  price           Decimal?  @db.Decimal(15, 2)
+  kasPerPerson    Decimal   @default(0) @map("kas_per_person") @db.Decimal(15, 2)
+  maxParticipants Int?      @map("max_participants")
+  visibility      String    @default("private") // private, public (Phase 2)
+  status          String    @default("open") // open, done, cancelled
+  createdById     String?   @map("created_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  group        Group              @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdBy    Member?            @relation(fields: [createdById], references: [id])
+  participants MatchParticipant[]
+  kasTransactions KasTransaction[]
+
+  @@map("matches")
+}
+
+// Match Participants Table
+model MatchParticipant {
+  id        String   @id @default(uuid())
+  matchId   String   @map("match_id")
+  memberId  String?  @map("member_id")
+  userId    String?  @map("user_id")
+  amountDue Decimal  @default(0) @map("amount_due") @db.Decimal(15, 2)
+  joinedAt  DateTime @default(now()) @map("joined_at")
+
+  // Relations
+  match  Match   @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  member Member? @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  user   User?   @relation(fields: [userId], references: [id])
+
+  @@unique([matchId, memberId])
+  @@unique([matchId, userId])
+  @@map("match_participants")
+}
+
+// Kas Transactions Table
+model KasTransaction {
+  id          String   @id @default(uuid())
+  groupId     String   @map("group_id")
+  matchId     String?  @map("match_id")
+  type        String // income, expense
+  amount      Decimal  @db.Decimal(15, 2)
+  description String?
+  createdById String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  group     Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  match     Match?  @relation(fields: [matchId], references: [id])
+  createdBy Member? @relation(fields: [createdById], references: [id])
+
+  @@map("kas_transactions")
+}
+
+// ============================================
+// PHASE 2 TABLES (To be implemented later)
+// ============================================
+
+// Group Invites Table (Phase 2)
+// Uncomment when ready for Phase 2
+// model GroupInvite {
+//   id         String    @id @default(uuid())
+//   groupId    String    @map("group_id")
+//   invitedBy  String    @map("invited_by")
+//   inviteCode String    @unique @map("invite_code")
+//   expiresAt  DateTime? @map("expires_at")
+//   maxUses    Int?      @map("max_uses")
+//   usedCount  Int       @default(0) @map("used_count")
+//   createdAt  DateTime  @default(now()) @map("created_at")
+//
+//   @@map("group_invites")
+// }
