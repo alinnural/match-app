@@ -13,6 +13,9 @@ RUN npm ci --only=production && npm cache clean --force
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+# Install build dependencies including OpenSSL 1.1 compat for Prisma
+RUN apk add --no-cache openssl1.1-compat
+
 # Install build dependencies
 COPY backend/package*.json ./
 RUN npm ci && npm cache clean --force
@@ -37,8 +40,13 @@ RUN npm run build
 FROM node:20-alpine AS production
 WORKDIR /app
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init wget
+# Install dependencies for Prisma (libssl.so.1.1 compatibility)
+# Alpine Linux modern uses OpenSSL 3.x, but Prisma needs libssl.so.1.1
+RUN apk add --no-cache \
+    dumb-init \
+    wget \
+    openssl1.1-compat \
+    libc6-compat
 
 # Set environment variables
 ENV NODE_ENV=production
