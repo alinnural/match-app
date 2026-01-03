@@ -38,7 +38,8 @@ export class JoinCommand extends BaseCommand {
         // Show list of matches
         let listText = '📋 **Daftar Pertandingan Aktif:**\n\n';
         matches.forEach((m, idx) => {
-          listText += `${idx + 1}. **${m.name}** - ${m.venue}\n   💰 Rp ${m.price?.toLocaleString('id-ID') || '0'}\n   👥 ${m._count.participants || 0} peserta\n\n`;
+          const price = m.price ? Number(m.price).toLocaleString('id-ID') : '0';
+          listText += `${idx + 1}. **${m.name}** - ${m.venue}\n   💰 Rp ${price}\n   👥 ${m._count.participants || 0} peserta\n\n`;
         });
         listText += `Ketik */join <nomor>* untuk bergabung\nContoh: /join 1`;
 
@@ -78,7 +79,7 @@ export class JoinCommand extends BaseCommand {
 
 📌 ${selectedMatch.name}
 📍 ${selectedMatch.venue}
-💰 Rp ${selectedMatch.price?.toLocaleString('id-ID') || '0'}
+💰 Rp ${selectedMatch.price ? Number(selectedMatch.price).toLocaleString('id-ID') : '0'}
 
 Ketik */status* untuk lihat detail pertandingan
 Ketik */leave* untuk keluar dari pertandingan

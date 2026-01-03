@@ -223,7 +223,7 @@ export class WhatsappService {
       // Execute through command handler
       const result = await this.commandHandler.handleMessage(mockMessage);
 
-      return result || `✅ Command "${command}" executed successfully`;
+      return `✅ Command "${command}" executed successfully`;
     } catch (error) {
       this.logger.error(`Error executing test command: ${error.message}`);
       throw new Error(`Failed to execute command: ${error.message}`);

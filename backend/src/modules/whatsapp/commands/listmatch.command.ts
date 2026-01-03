@@ -38,7 +38,8 @@ export class ListMatchCommand extends BaseCommand {
       if (activeMatches.length > 0) {
         listText += '🟢 **Aktif:**\n';
         activeMatches.forEach((m, idx) => {
-          listText += `${idx + 1}. **${m.name}**\n   📍 ${m.venue}\n   💰 Rp ${m.price?.toLocaleString('id-ID') || '0'}\n   👥 ${m._count.participants} peserta\n\n`;
+          const price = m.price ? Number(m.price).toLocaleString('id-ID') : '0';
+          listText += `${idx + 1}. **${m.name}**\n   📍 ${m.venue}\n   💰 Rp ${price}\n   👥 ${m._count.participants} peserta\n\n`;
         });
       }
 

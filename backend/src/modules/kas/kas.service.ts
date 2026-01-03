@@ -196,11 +196,13 @@ export class KasService {
       const totalCost = Number(match.price) * match.participants.length;
       const amountPerPerson = totalCost / match.participants.length;
 
-      const settlement = match.participants.map((p) => ({
-        memberId: p.member.id,
-        memberName: p.member.name,
-        amountDue: amountPerPerson,
-      }));
+      const settlement = match.participants
+        .filter((p) => p.member !== null)
+        .map((p) => ({
+          memberId: p.member!.id,
+          memberName: p.member!.name,
+          amountDue: amountPerPerson,
+        }));
 
       return {
         matchId: match.id,
